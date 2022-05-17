@@ -3,7 +3,7 @@ import subprocess
 import os
 import traceback
 import sys
-from report import load_json_data, get_log_dir, run_one_report
+from report import load_json_data, get_log_dir, run_one_report, run_summary
 
 RUN_ALL = True if sys.argv[1] == "True" else False
 DEVICE = sys.argv[2]
@@ -18,10 +18,11 @@ def run():
         tasks = run_tests(results)
 
         for task in tasks:
-            results[DEVICE]['tests'][task['air']] = run_one_report(task['air'], DEVICE)
-            results[DEVICE]['tests'][task['air']]['status'] = task['status']
+            results['tests'][task['air']] = run_one_report(task['air'], DEVICE)
+            results['tests'][task['air']]['status'] = task['status']
 
         json.dump(results, open(json_file, "w"), indent=4)
+        run_summary(results, DEVICE)
     except Exception as e:
         traceback.print_exc()
 
@@ -32,8 +33,8 @@ def run_tests(results):
     """
     tasks = []
     for air in TESTS:
-        if not RUN_ALL and results[DEVICE].get('tests').get(air) and \
-                results[DEVICE].get('tests').get(air).get('status') == 0:
+        if not RUN_ALL and results['tests'].get(air) and \
+                results['tests'].get(air).get('status') == 0:
             print("Skip test %s" % air)
             continue
 

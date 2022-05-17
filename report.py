@@ -4,6 +4,9 @@ import subprocess
 import os
 import time
 import traceback
+import webbrowser
+
+from jinja2 import Environment, FileSystemLoader
 
 
 def load_json_data(dev, tests, run_all):
@@ -26,9 +29,8 @@ def load_json_data(dev, tests, run_all):
         clear_log_dir(tests, dev)
         return {
             'start': time.time(),
-            dev: {
-                'tests': {}
-            }
+            'device': dev,
+            'tests': {}
         }
 
 
@@ -64,6 +66,30 @@ def run_one_report(air, dev):
     return {'status': -1, 'path': ''}
 
 
+def run_summary(data, dev):
+    """
+        Build summary test report
+    """
+    try:
+        summary = {
+            'time': "%.3f" % (time.time() - data['start']),
+            'success': [item['status'] for item in data['tests'].values()].count(0),
+            'count': len(data['tests'])
+        }
+        summary.update(data)
+        summary['start'] = time.strftime("%Y-%m-%d %H:%M:%S",
+                                         time.localtime(data['start']))
+        env = Environment(loader=FileSystemLoader(os.getcwd()),
+                          trim_blocks=True)
+        html = env.get_template('report_tpl.html').render(data=summary)
+        report_dir = os.path.join(os.getcwd(), 'logs', dev.replace(".", "_").replace(':', '_'), 'report.html')
+        with open(report_dir, "w", encoding="utf-8") as f:
+            f.write(html)
+        webbrowser.open(report_dir)
+    except Exception as e:
+        traceback.print_exc()
+
+
 def check_log_dir_for_folders_about_which_no_info(data, tests, dev):
     """
         Check log directory for folders about which there is no information
@@ -72,7 +98,7 @@ def check_log_dir_for_folders_about_which_no_info(data, tests, dev):
     """
     temp_list = tests.copy()
 
-    for air in data[dev]['tests']:
+    for air in data['tests']:
         temp_list.remove(air)
 
     clear_log_dir(temp_list, dev)
@@ -87,7 +113,7 @@ def check_log_dir_for_missing_folder(data, tests, dev):
     temp_list = []
     temp_data = data.copy()
 
-    for air in temp_data[dev]['tests']:
+    for air in temp_data['tests']:
         log_dir = os.path.join(os.getcwd(), 'logs', dev.replace(".", "_").replace(':', '_'), air)
         if not os.path.exists(log_dir):
             temp_list.append(air)

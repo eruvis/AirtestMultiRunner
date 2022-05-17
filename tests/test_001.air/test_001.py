@@ -1,5 +1,7 @@
 # -*- encoding=utf8 -*-
 __author__ = "Isaev Rustam"
+__title__ = "Device wake"
+__desc__ = "Description test"
 
 from airtest.core.api import *
 
