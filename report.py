@@ -22,7 +22,7 @@ def load_json_data(dev, tests, run_all):
     if not run_all and os.path.isfile(json_file):
         data = json.load(open(json_file))
         check_log_dir_for_folders_about_which_no_info(data, tests, dev)
-        data = check_log_dir_for_missing_folder(data, tests, dev)
+        data = check_log_dir_for_missing_folder(data, dev)
         data['start'] = time.time()
         return data
     else:
@@ -96,15 +96,16 @@ def check_log_dir_for_folders_about_which_no_info(data, tests, dev):
         if folder log test exists and data.json has no information about it:
             delete log test dir
     """
-    temp_list = tests.copy()
+    temp_list = tests.copy() # тесты которые нужно запустить
 
     for air in data['tests']:
-        temp_list.remove(air)
+        if air in temp_list:
+            temp_list.remove(air)
 
     clear_log_dir(temp_list, dev)
 
 
-def check_log_dir_for_missing_folder(data, tests, dev):
+def check_log_dir_for_missing_folder(data, dev):
     """
         Check log directory for missing folders
         if information about test exists in data.json and log air folder empty:
@@ -119,7 +120,7 @@ def check_log_dir_for_missing_folder(data, tests, dev):
             temp_list.append(air)
 
     for air in temp_list:
-        temp_data[tests]['tests'].pop(air)
+        temp_data['tests'].pop(air)
 
     return temp_data
 
